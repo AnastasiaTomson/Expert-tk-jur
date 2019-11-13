@@ -1,0 +1,15 @@
+Metadata-Version: 2.0
+Name: designPy
+Version: 0.0.1
+Summary: A simple python design advice framework for educational purposes
+Home-page: https://github.com/Jelleas/DesignPy
+Author: Jelleas
+Author-email: jelle.van.assema@gmail.com
+License: MIT
+Requires-Dist: colorama
+Provides-Extra: dev
+Provides-Extra: test
+
+CheckPy
+
+

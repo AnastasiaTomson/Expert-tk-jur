@@ -1,0 +1,3 @@
+[console_scripts]
+designpy = designpy.__main__:main
+

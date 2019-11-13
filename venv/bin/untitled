@@ -1,0 +1,12 @@
+#!/home/delker/PycharmProjects/expert-tk/venv/bin/python
+# EASY-INSTALL-ENTRY-SCRIPT: 'Untitled==0.1','console_scripts','untitled'
+__requires__ = 'Untitled==0.1'
+import re
+import sys
+from pkg_resources import load_entry_point
+
+if __name__ == '__main__':
+    sys.argv[0] = re.sub(r'(-script\.pyw?|\.exe)?$', '', sys.argv[0])
+    sys.exit(
+        load_entry_point('Untitled==0.1', 'console_scripts', 'untitled')()
+    )
