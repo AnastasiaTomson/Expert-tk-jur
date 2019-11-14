@@ -1,1 +1,0 @@
-# Expert-tk-jur
