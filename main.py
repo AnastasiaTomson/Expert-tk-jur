@@ -2,17 +2,31 @@ from datetime import *
 
 import openpyxl
 import sys
-from PyQt5.QtWidgets import QApplication, QWidget, QInputDialog, QLineEdit, QFileDialog
-from PyQt5.QtGui import QIcon
+from PyQt5.QtWidgets import QApplication, QWidget, QFileDialog
 import pyexcel as p
 from openpyxl import Workbook
 from openpyxl.styles import PatternFill, Border, Alignment, Font, Side
 import copy
 
+
+app = QApplication(sys.argv)
 # определяем стили
-FONT = Font(name='FreeMono', size=11, bold=False, italic=False, vertAlign=None, underline='none', strike=False,
+FONT = Font(name='FreeMono', size=10, bold=False, italic=False, vertAlign=None, underline='none', strike=False,
             color='FF000000')
 FILL = PatternFill(fill_type='solid', start_color='f2f2f2', end_color='c2c2c2')
+
+ALIGN_CENTER = Alignment(horizontal='center', vertical='center', text_rotation=0, wrap_text=True, shrink_to_fit=False,
+                         indent=0)
+
+BORDER = Border(left=Side(border_style='thin', color='FF000000'),
+                right=Side(border_style='thin', color='FF000000'),
+                top=Side(border_style='thin', color='FF000000'),
+                bottom=Side(border_style='thin', color='FF000000'),
+                diagonal=Side(border_style='thin', color='FF000000'),
+                diagonal_direction=0,
+                outline=Side(border_style='thin', color='FF000000'),
+                vertical=Side(border_style='thin', color='FF000000'),
+                horizontal=Side(border_style='thin', color='FF000000'))
 
 
 class App(QWidget):
@@ -24,34 +38,32 @@ class App(QWidget):
         self.top = 10
         self.width = 700
         self.height = 500
-        self.icon = QIcon("M.jpg")
         self.initUI()
 
     def initUI(self):
         self.setWindowTitle(self.title)
-        self.setWindowIcon(self.icon)
         self.setGeometry(self.left, self.top, self.width, self.height)
-
         self.openFileNameDialog()
-        # self.saveFileDialog()
-
-        # self.show()
 
     def openFileNameDialog(self):
         options = QFileDialog.Options()
         options |= QFileDialog.DontUseNativeDialog
-        fileName, _ = QFileDialog.getOpenFileName(self, "Загрузить файл", "",
+        fileName, _ = QFileDialog.getOpenFileName(self, "Загрузить файл", "/",
                                                   "All Files (*);;Python Files (*.py)", options=options)
         if fileName:
             self.parse_file(fileName)
 
-    def saveFileDialog(self, res):
+    def saveFileDialog(self, init, work, fire):
         options = QFileDialog.Options()
         options |= QFileDialog.DontUseNativeDialog
-        file, _ = QFileDialog.getSaveFileName(self, "Сохранить ", res[1],
-                                              "All Files (*);;Text Files (*.text)", options=options)
+        file, _ = QFileDialog.getSaveFileName(self, "Сохранить ", " ", "All Files (*);;Text Files (*.text)",
+                                              options=options)
+
         if file:
-            res[0].save(file)
+            init[0].save(file + init[1])
+            work[0].save(file + work[1])
+            fire[0].save(file + fire[1])
+        sys.exit()
 
     def parse_file(self, file_name):
         # Делаем проверку, если у файла расширение не xlsx, то конвертируем его в test.xlsx
@@ -111,15 +123,11 @@ class App(QWidget):
         init = initiative(start_list)
         work = workplace(start_list)
         fire_dict = fire(start_list)
-        response = create_file(init['list'], init['header'], init['title'], init['col'])
-        if response[1]:
-            self.saveFileDialog(response)
-        response = create_file(work['list'], work['header'], work['title'], work['col'])
-        if response[1]:
-            self.saveFileDialog(response)
-        response = create_file(fire_dict['list'], fire_dict['header'], fire_dict['title'], fire_dict['col'])
-        if response[1]:
-            self.saveFileDialog(response)
+        init_path = create_file(init['list'], init['header'], init['title'], init['col'])
+        work_path = create_file(work['list'], work['header'], work['title'], work['col'])
+        fire_path = create_file(fire_dict['list'], fire_dict['header'], fire_dict['title'], fire_dict['col'])
+        if init_path and work_path and fire_path:
+            self.saveFileDialog(init_path, work_path, fire_path)
 
 
 def create_file(rows, header, title, col_list):
@@ -147,8 +155,21 @@ def create_file(rows, header, title, col_list):
     for i in col_list:
         ws.merge_cells(i)
 
-    # раскрвшивание фона для заголовков
-    for cellObj in ws['A1:H2']:
+    # шрифт
+    r = 'A1:' + col_list[-1][-2] + str(len(rows) + 2)
+    for cellObj in ws[r]:
+        for cell in cellObj:
+            ws[cell.coordinate].font = FONT
+            ws[cell.coordinate].border = BORDER
+            ws[cell.coordinate].alignment = ALIGN_CENTER
+            ws.column_dimensions[cell.coordinate[0]].width = len(str(cell.value)) + 15
+
+    for i in range(1, ws.max_row + 1):
+        rd = ws.row_dimensions[i]
+        rd.height = 40
+
+    # раскрашивание фона для заголовков
+    for cellObj in ws['A1:' + col_list[-1][-2] + '2']:
         for cell in cellObj:
             ws[cell.coordinate].fill = FILL
 
@@ -224,12 +245,13 @@ def workplace(a):
                       'Вид инструктажа', 'Причина проведения внепланового инструктажа',
                       'Фамилия, инициалы  инструктирующего', 'Подпись', '', 'Стажировка на рабочем месте', ''),
                      ('', '', '', '', '', '', '', 'Инструктирующего', 'Инструктируемого', 'Количество смен',
-                      'Стажировку прошел (попись работника)', 'Допуск к работе')]
+                      'Стажировку прошел (подпись работника)', 'Допуск к работе')]
     return res
 
 
 def fire(a):
-    keys = ['fio_staff', 'year_birth', 'profession_staff', 'instruction_type', "department_name", 'fio_instructor', "", ""]
+    keys = ['fio_staff', 'year_birth', 'profession_staff', 'instruction_type', "department_name", 'fio_instructor', "",
+            ""]
     res = dict()
     res_list = []
     for i in a:
@@ -267,7 +289,7 @@ def fire(a):
                 res_list.append(f1)
     res_list = sorted(res_list, key=lambda d: d[1])
     for v in range(len(res_list)):
-        res_list[v][0] = v+1
+        res_list[v][0] = v + 1
     res['list'] = res_list
     res['title'] = 'Инструктаж по пожарной безопасности'
     res['col'] = ['A1:A2', 'B1:B2', 'C1:C2', 'D1:D2', 'E1:E2', 'F1:F2', 'G1:G2', 'H1:H2', 'I1:J1']
@@ -301,7 +323,5 @@ def parse_holiday(next_date):
     return False
 
 
-if __name__ == '__main__':
-    app = QApplication(sys.argv)
-    ex = App()
-    sys.exit(app.exec_())
+ex = App()
+sys.exit(app.exec_())
