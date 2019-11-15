@@ -56,7 +56,7 @@ class App(QWidget):
     def saveFileDialog(self, init, work, fire):
         options = QFileDialog.Options()
         options |= QFileDialog.DontUseNativeDialog
-        file, _ = QFileDialog.getSaveFileName(self, "Сохранить ", " ", "All Files (*);;Text Files (*.text)",
+        file, _ = QFileDialog.getSaveFileName(self, "Сохранить ", "", "All Files (*);;Text Files (*.text)",
                                               options=options)
 
         if file:
@@ -137,6 +137,8 @@ def create_file(rows, header, title, col_list):
     # активный лист
     ws = wb.active
 
+    # ws = wb.create_sheet(title=title)
+
     # название страницы
     ws.title = title
 
@@ -174,7 +176,7 @@ def create_file(rows, header, title, col_list):
             ws[cell.coordinate].fill = FILL
 
     file_name = (title.replace(' ', '_') + "_" +
-                 str(datetime.now().strftime("%d.%m.%Y %H:%M")) + ".xlsx")
+                 str(datetime.now().strftime("%d.%m.%Y.%H.%M")) + ".xlsx")
     return [wb, file_name]
 
 
@@ -314,7 +316,13 @@ def parse_holiday(next_date):
     year = next_date.year
     month = next_date.month
     day = next_date.day
-    wb = openpyxl.load_workbook(filename="holiday.xlsx")
+    import sys
+    import os.path
+    if hasattr(sys, "_MEIPASS"):
+        datadir = os.path.join(sys._MEIPASS, 'holiday.xlsx')
+    else:
+        datadir = 'holiday.xlsx'
+    wb = openpyxl.load_workbook(filename=datadir)
     sheet = wb.active
     for row in sheet.rows:
         if row[0].value == year:
